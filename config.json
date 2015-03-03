@@ -1,7 +1,5 @@
 {
   "slack": {
-    "clientId": "<Slack clientId>",
-    "secret": "<Slack secret>",
-    "token": "<Slack token>"
+    "token": "xoxp-3349685412-3349685414-3863379629-8a278d"
   }
 }
