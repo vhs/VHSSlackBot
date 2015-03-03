@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('VHSSlackBot:server');
 var http = require('http');
+var config = require('../config');
 var https = require('https');
 
 /**
@@ -23,9 +24,9 @@ app.set('port', port);
 var server = http.createServer(app);
 
 
-var slack_clientid = "3349685412.3871901577";
-var slack_clientsecret = "40000eac9067a1704be479221e010abe";
-var slack_vhsbot_token = "xoxb-3873866116-h74QpgPv3RvRBjWwfdft8Wjl";
+var slack_clientid = config.slack.clientId;
+var slack_clientsecret = config.slack.secret;
+var slack_vhsbot_token = config.slack.token;
 
 var io = require('socket.io')(server);
 
