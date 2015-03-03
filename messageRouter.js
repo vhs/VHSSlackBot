@@ -1,5 +1,5 @@
 var slackClient = require('./slackClient');
 
-slackClient.onMessage(function(message){
+slackClient.message.received(function(message){
     console.log("new message: " + message.text);
 });
