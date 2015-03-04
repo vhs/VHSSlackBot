@@ -8,7 +8,6 @@ var app = require('../app');
 var slackClient = require('../slackClient');
 var debug = require('debug')('VHSSlackBot:server');
 var http = require('http');
-var sio = require('../socketio');
 
 /**
  * Get port from environment and store in Express.
@@ -21,9 +20,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
-
-sio.init(server);
+var server = app.createServer();
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -92,22 +89,4 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
-
-slackClient.connect(function() {
-    slackClient.channels.list(function(args) {
-        debug(JSON.stringify(args));
-    });
-
-    slackClient.message.send("asdf", "general", function(args) {
-        debug(JSON.stringify(args));
-    });
-
-    sio.onCommand(function(json) {
-        slackClient.command(json, function(reply) {
-            sio.message.send(JSON.stringify(reply), function(args) {
-                debug(JSON.stringify(args));
-            });
-        });
-    });
-});
 
