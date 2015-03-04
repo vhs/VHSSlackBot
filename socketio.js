@@ -1,9 +1,7 @@
 'use strict';
 
 var io;
-var EventEmitter = require("events").EventEmitter;
-
-var ee = new EventEmitter();
+var slackClient = require("./slackClient");
 
 module.exports.init = function(server){
     io = require('socket.io')(server);
@@ -14,36 +12,18 @@ module.exports.init = function(server){
             console.log('user disconnected');
         });
 
-        socket.on('chat message', function(msg){
-            console.log('message: ' + msg);
-
-            if (msg.indexOf("/command ") == 0) {
-                var json = msg.replace("/command ", "");
-
-                ee.emit("json-command", json);
-            }
-
-            ee.emit("received-message", msg);
-            io.emit('chat message', msg);
-        });
-
-        ee.on("send-message", function(msg) {
-            io.emit('chat message', msg);
+        socket.on('web-message', function(msg){
+            slackClient.message.sendAsUser(msg.text, msg.from)
+                .then(function(msg){
+                    socket.emit('web-message-ack', msg);
+                })
+                .catch(function(err){
+                    socket.emit('web-message-err', err);
+                });
         });
     });
 };
 
-module.exports.io = io;
-
-module.exports.onCommand = function(handler) {
-    ee.on("json-command", handler);
-};
-
-module.exports.message = {
-    send: function(message, callback) {
-        ee.emit("send-message", message, callback);
-    },
-    received: function(handler) {
-        ee.on("received-message", handler);
-    }
-};
+slackClient.message.received(function(payload){
+    io.emit("slack-message", payload);
+});

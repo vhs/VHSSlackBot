@@ -6,8 +6,8 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var messageRouter = require('./messageRouter');
 var sio = require('./socketio');
+var slackClient = require('./slackClient');
 
 
 var routes = require('./routes/index');
@@ -16,6 +16,7 @@ var app = express();
 var server = require('http').Server(app);
 
 sio.init(server);
+slackClient.connect();
 
 app.createServer = function(){
     return server;
