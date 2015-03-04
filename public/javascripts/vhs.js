@@ -12,7 +12,7 @@ $(function() {
     });
 
     socket.on('slack-message', function(msg){
-        $('#messages').append($('<li>').text(msg.text));
+        $('#messages').append($('<li>').text(msg.username + ": " + msg.text));
     });
 });
 

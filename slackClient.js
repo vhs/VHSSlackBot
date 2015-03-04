@@ -13,6 +13,8 @@ var ee = new EventEmitter();
 var SLACK_TOKEN = config.token;
 var CHANNEL_ID = config.channel;
 
+var userProfileCache = {};
+
 function setupWebSocket(url){
     //TODO: Error handling and reconnect logic
     var ws = new WebSocket(url);
@@ -36,7 +38,7 @@ function setupWebSocket(url){
 }
 
 //Join needs a channel name, look up the ID here.
-function channelNameForId(channelName) {
+function channelInfo(channelName) {
     return agent('GET', 'https://slack.com/api/channels.info')
         .query({
             token: SLACK_TOKEN,
@@ -46,6 +48,21 @@ function channelNameForId(channelName) {
         .then(function(res){
             if (res.body.ok){
                 return res.body.channel;
+            }
+        });
+}
+
+function userInfo(userId) {
+    return agent('GET', 'https://slack.com/api/users.info')
+        .query({
+            token: SLACK_TOKEN,
+            user: userId
+        })
+        .end()
+        .then(function(res){
+            if (res.body.ok){
+                userProfileCache[userId] = res.body.user;
+                return res.body.user;
             }
         });
 }
@@ -71,7 +88,7 @@ module.exports.connect = function(){
         .end()
         .then(function onResult(res) {
             setupWebSocket(res.body.url);
-            return channelNameForId(CHANNEL_ID);
+            return channelInfo(CHANNEL_ID);
         })
         .then(function(channel){
             if (channel){
@@ -106,9 +123,42 @@ function sendRTMCommand(payload){
     });
 }
 
+function populateUsernameInMessage(payload) {
+    return new Promise(function(resolve, reject){
+        if (payload.username){
+            //Nothing do do
+            return resolve(payload);
+        }
+        if (!payload.username && payload.user) {
+            if (userProfileCache[payload.user]) {
+                payload.username = userProfileCache[payload.user].name;
+                return resolve(payload);
+            } else {
+                return userInfo(payload.user)
+                    .then(function(user){
+                        userProfileCache[payload.user] = user;
+                        payload.username = user.name;
+                        resolve(payload);
+                    })
+                    .catch(function(err){
+                        //Resolve anyway
+                        payload.username = payload.user;
+                        resolve(payload);
+                    })
+            }
+        }
+        //Shouldn't get this far unless user and username is missing
+        payload.username = payload.user;
+        resolve(payload);
+    });
+}
+
 module.exports.message = {
     received: function (handler) {
-        ee.on("message", handler);
+        ee.on("message", function(payload){
+            populateUsernameInMessage(payload)
+                .then(handler);
+        });
     },
     send: function(message, channel) {
         return sendRTMCommand({ type: "message", channel: channel, text: message });
