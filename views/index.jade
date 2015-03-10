@@ -3,5 +3,12 @@ extends layout
 block content
     ul(id="messages")
     form(action="")
-        input(id="m", autocomplete="off")
-        button Send
+        div(class="row")
+            div(class="col-xs-3")
+                div(class="input-group")
+                    div(class="input-group-addon") @
+                    input(id="username", autocomplete="off", class="form-control", placeholder="Username")
+            div(class="col-xs-7")
+                input(id="m", autocomplete="off", placeholder="Message", class="form-control")
+            div(class="col-xs-2")
+                button(class="btn btn-primary") Send
